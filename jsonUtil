@@ -1,0 +1,59 @@
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Map;
+
+public class JsonUtils {
+
+    public static String updateJsonFromFile(String filePath, Map<String, Object> fieldMap) {
+        try {
+            // Read the JSON string from the file
+            String jsonString = new String(Files.readAllBytes(Paths.get(filePath)));
+            return updateJson(jsonString, fieldMap);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String updateJson(String jsonString, Map<String, Object> fieldMap) {
+        JSONObject jsonObject = new JSONObject(jsonString);
+
+        for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
+            String path = entry.getKey();
+            Object value = entry.getValue();
+            
+            // Splitting the JSON path into individual keys
+            String[] keys = path.split("\\.");
+            JSONObject tempObject = jsonObject;
+
+            // Traversing the JSON object to reach the specified path
+            for (int i = 0; i < keys.length - 1; i++) {
+                if (!tempObject.has(keys[i])) {
+                    // If the key does not exist, return the original JSON
+                    return jsonString;
+                }
+                tempObject = tempObject.getJSONObject(keys[i]);
+            }
+
+            // Updating the value at the specified path
+            tempObject.put(keys[keys.length - 1], value);
+        }
+
+        return jsonObject.toString();
+    }
+
+    public static void main(String[] args) {
+        // Example usage
+        String filePath = "input.json"; // Path to the input JSON file
+        Map<String, Object> fieldMap = Map.of(
+                "person.name", "Alice",
+                "person.address.city", "Los Angeles"
+        );
+
+        String updatedJsonString = updateJsonFromFile(filePath, fieldMap);
+        System.out.println(updatedJsonString);
+    }
+}
